@@ -2,22 +2,47 @@ import React from "react";
 import { ContactsCollection } from "../api/ContactsCollection";
 import { useTracker } from "meteor/react-meteor-data";
 
-const ContactList = () => {
-  const contacts = useTracker(() => ContactsCollection.find().fetch()); // Tracker to upfate data without this hook the app dont work
+export const ContactList = () => {
+  const contacts = useTracker(() => {
+    return ContactsCollection.find({}, { sort: { createdAt: -1 } }).fetch();
+  });
 
   return (
     <div>
-      <h2>Contact List</h2>
-      <ul>
-        {contacts.map((contact) => (
-          // Remember to add an unique key value
-          <li key={contact._id}>
-            {contact.name} - {contact.email}
-          </li>
-        ))}
-      </ul>
+      <div className="mt-10">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          Contact List
+        </h3>
+        <ul
+          role="list"
+          className="mt-4 border-t border-b border-gray-200 divide-y divide-gray-200"
+        >
+          {contacts.map((person, index) => (
+            <li
+              key={index}
+              className="py-4 flex items-center justify-between space-x-3"
+            >
+              <div className="min-w-0 flex-1 flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <img
+                    className="h-10 w-10 rounded-full"
+                    src={person.imageUrl}
+                    alt=""
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {person.name}
+                  </p>
+                  <p className="text-sm font-medium text-gray-500 truncate">
+                    {person.email}
+                  </p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
-
-export default ContactList;
