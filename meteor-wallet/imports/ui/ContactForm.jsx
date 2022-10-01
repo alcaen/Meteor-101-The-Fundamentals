@@ -1,20 +1,43 @@
 import React from "react";
-import { ContactsCollection } from "../api/ContactsCollection";
+// import { ContactsCollection } from "../api/ContactsCollection";
+import { Meteor } from "meteor/meteor";
+import { ErrorAlert } from "./components/ErrorAlert";
+import { SuccessAlert } from "./components/SuccessAlert";
 
 export const ContactForm = () => {
-  const [name, setName] = React.useState(""); // Formik
+  const [name, setName] = React.useState(""); // Hooks
   const [email, setEmail] = React.useState("");
   const [imageUrl, setImageUrl] = React.useState("");
+  const [error, setError] = React.useState("");
+  const [success, setSuccess] = React.useState("");
+
+  const showAlert = (cb, errorRes = "") => {
+    errorRes.error ? cb(errorRes.error) : cb(errorRes);
+    setTimeout(() => {
+      cb("");
+    }, 5000);
+  };
 
   const saveContact = () => {
-    ContactsCollection.insert({ name, email, imageUrl });
-    setName("");
-    setEmail("");
-    setImageUrl("");
+    // Special method created in api that interacts with the db
+    Meteor.call("contacts.insert", { name, email, imageUrl }, (errorRes) => {
+      if (errorRes) {
+        showAlert(setError, errorRes);
+        setSuccess("");
+      } else {
+        setName("");
+        setEmail("");
+        setImageUrl("");
+        setError("");
+        showAlert(setSuccess, "Contact Saved");
+      }
+    });
   };
 
   return (
     <form className="mt-6">
+      {error && <ErrorAlert message={error} />}
+      {success && <SuccessAlert message={success} />}
       <div className="grid grid-cols-6 gap-6">
         <div className="col-span-6 sm:col-span-6 lg:col-span-2">
           <label
@@ -29,6 +52,7 @@ export const ContactForm = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            placeholder="Your Name"
           />
         </div>
 
@@ -45,6 +69,7 @@ export const ContactForm = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            placeholder="email@example.com"
           />
         </div>
 
@@ -61,6 +86,7 @@ export const ContactForm = () => {
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            placeholder="example.png"
           />
         </div>
       </div>
