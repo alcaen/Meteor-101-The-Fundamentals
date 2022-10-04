@@ -1,17 +1,38 @@
 import React from "react";
 import { ContactsCollection } from "../api/ContactsCollection";
-import { useTracker } from "meteor/react-meteor-data";
+import { useTracker, useSubscribe, useFind } from "meteor/react-meteor-data";
 import { Meteor } from "meteor/meteor";
+import ContactItem from "./components/ContactItem";
 
 export const ContactList = () => {
-  const contacts = useTracker(() => {
-    return ContactsCollection.find({}, { sort: { createdAt: -1 } }).fetch();
+  // Publish the contacts
+
+  const isLoading = useSubscribe("allContacts"); // Name of the publication
+  const contacts = useFind(() => {
+    const result = ContactsCollection.find({}, { sort: { createdAt: -1 } }); // We dont have to use fetch cause use Find recive a cursor.
+    console.log(result.fetch()); // When the cursor is fetch it returns an object.
+    return result;
   });
+
+  // Publish the contacts
 
   const removeContact = (event, _id) => {
     event.preventDefault();
     Meteor.call("contacts.remove", { contactId: _id });
   };
+
+  if (isLoading()) {
+    return (
+      <div>
+        <div className="mt-10">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            Loading...
+          </h3>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mt-10">
@@ -22,38 +43,8 @@ export const ContactList = () => {
           role="list"
           className="mt-4 border-t border-b border-gray-200 divide-y divide-gray-200"
         >
-          {contacts.map((person, index) => (
-            <li
-              key={index}
-              className="py-4 flex items-center justify-between space-x-3"
-            >
-              <div className="min-w-0 flex-1 flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <img
-                    className="h-10 w-10 rounded-full"
-                    src={person.imageUrl}
-                    alt=""
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {person.name}
-                  </p>
-                  <p className="text-sm font-medium text-gray-500 truncate">
-                    {person.email}
-                  </p>
-                </div>
-                <div>
-                  <a
-                    href="#"
-                    onClick={(event) => removeContact(event, person._id)}
-                    className="inline-flex items-center shadow-sm px-2.5 py-0.5 border border-gray-300 text-sm leading-5 font-medium rounded-full text-gray-700 bg-white hover:bg-gray-50"
-                  >
-                    Remove
-                  </a>
-                </div>
-              </div>
-            </li>
+          {contacts.map((contact) => (
+            <ContactItem key={contact._id} contact={contact} />
           ))}
         </ul>
       </div>
